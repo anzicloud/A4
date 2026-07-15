@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>A4 图片排版工具 Pro</title>
 <!-- PWA Manifest -->
-<link rel="manifest" href="/A4/manifest.json">
+<link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#4f46e5">
 
 <!-- ✅ 关键改动：引用本地 jsPDF 库 -->
 <!-- 替换原来的引入代码 -->
-<script src="/A4/libs/jspdf.umd.min.js" charset="utf-8"></script>
+<script src="./libs/jspdf.umd.min.js" charset="utf-8"></script>
 <style>
 :root {
   --bg: #f1f3f6;
@@ -754,7 +754,7 @@ applyTemplate('custom');
 /* ========== Service Worker 注册 ========== */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/A4/service-worker.js')
+    navigator.serviceWorker.register('./service-worker.js')
       .then(registration => console.log('Service Worker 注册成功'))
       .catch(err => console.log('Service Worker 注册失败:', err));
   });
