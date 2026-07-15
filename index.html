@@ -725,7 +725,7 @@ applyTemplate('custom');
 /* ========== Service Worker 注册 ========== */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
+    navigator.serviceWorker.register('/A4/service-worker.js')
       .then(registration => console.log('Service Worker 注册成功'))
       .catch(err => console.log('Service Worker 注册失败:', err));
   });
