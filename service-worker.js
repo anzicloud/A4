@@ -3,7 +3,7 @@ const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/libs/jspdf.umd.min.js' // ✅ 缓存本地库
+  './libs/jspdf.umd.min.js' // ✅ 缓存本地库
 ];
 
 // 安装阶段：缓存核心资源
