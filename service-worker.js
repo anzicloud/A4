@@ -1,9 +1,9 @@
 const CACHE_NAME = 'a4-layout-tool-local-v2'; // 更新缓存版本号
 const ASSETS_TO_CACHE = [
   '/',
-  '/index.html',
-  '/manifest.json',
-  './libs/jspdf.umd.min.js' // ✅ 缓存本地库
+  '/A4/index.html',
+  '/A4/manifest.json',
+  '/A4/libs/jspdf.umd.min.js' // ✅ 缓存本地库
 ];
 
 // 安装阶段：缓存核心资源
