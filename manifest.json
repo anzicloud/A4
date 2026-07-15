@@ -2,21 +2,24 @@
   "name": "A4图片排版工具 Pro",
   "short_name": "A4排版",
   "description": "纯本地运行，完全离线可用的A4图片排版工具",
-  "start_url": "/",
+  "start_url": "./",          /* 相对路径：当前目录（A4）下的index.html */
+  "scope": "./",              /* 作用域限定在当前目录 */
   "display": "standalone",
   "background_color": "#f1f3f6",
   "theme_color": "#4f46e5",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "/A4/icons/icon-192.png",
+      "src": "icons/icon-192.png",  /* 相对路径：A4/icons/下 */
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": ["any", "maskable"]
     },
     {
-      "src": "/A4/icons/icon-512.png",
+      "src": "icons/icon-512.png",  /* 相对路径：A4/icons/下 */
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": ["any", "maskable"]
     }
   ]
 }
