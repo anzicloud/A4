@@ -19,6 +19,46 @@
   outline: none;
   user-select: none;
 }
+  /* ============================================= */
+/* 彻底去除移动端点击淡蓝色遮罩 - 强制生效代码 */
+/* ============================================= */
+
+/* 1. 全局强制消除（最顶层选择器） */
+* {
+  /* 核心属性：将点击高亮设为完全透明 */
+  -webkit-tap-highlight-color: transparent !important;
+  /* 兼容旧版安卓 */
+  tap-highlight-color: transparent !important;
+  
+  /* 辅助：去除获取焦点时的虚线框/蓝框 */
+  outline: none !important;
+  /* 辅助：去除长按弹出的系统菜单背景 */
+  -webkit-touch-callout: none !important;
+}
+
+/* 2. 针对按钮和可点击元素的双层保险 */
+/* 包含了常见的 button、input，以及你代码中可能用到的 div 按钮 */
+button, 
+input[type="button"], 
+input[type="submit"], 
+a, 
+[role="button"],
+.template-btn,  /* 如果你有自定义类名，保留在这里 */
+.switch-btn,
+.icon-btn,
+.image-item {
+  -webkit-tap-highlight-color: transparent !important;
+  tap-highlight-color: transparent !important;
+  outline: none !important;
+}
+
+/* 3. 针对 active 状态的特殊处理（防止部分机型在按下时有颜色） */
+button:active, 
+[role="button"]:active,
+.template-btn:active {
+  background-color: inherit !important; /* 继承背景色，防止变色 */
+  opacity: 1 !important; /* 防止系统自动降低透明度 */
+}
 
 body {
   margin: 0;
