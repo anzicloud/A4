@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>A4 图片排版工具 Pro</title>
+<!-- PWA Manifest -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#4f46e5">
+
+<!-- ✅ 关键改动：引用本地 jsPDF 库 -->
+<script src="/libs/jspdf.umd.min.js"></script>
+
+<style>
+:root {
+  --bg: #f1f3f6;
+  --card: #ffffff;
+  --primary: #4f46e5;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --text: #1e1e1e;
+  --muted: #6b7280;
+  --radius: 16px;
+  --shadow: 0 10px 40px rgba(0,0,0,.08);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 14px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+header p {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px;
+  margin-bottom: 18px;
+}
+
+.template-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.template-btn {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.template-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 14px;
+}
+
+label {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  display: block;
+}
+
+input[type="number"] {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  font-size: 16px;
+  background: #f9fafb;
+}
+
+input[type="file"] {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 2px dashed #d1d5db;
+  background: #fafbfc;
+  margin-top: 4px;
+}
+
+.switch-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.switch-btn {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.switch-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.image-list {
+  margin-top: 14px;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+}
+
+.image-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #e5e7eb;
+  cursor: grab;
+  transition: background .15s;
+}
+
+.image-item:last-child {
+  border-bottom: none;
+}
+
+.image-item.dragging {
+  opacity: 0.5;
+  background: #eef2ff;
+}
+
+.image-thumb {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-right: 12px;
+  background: #e5e7eb;
+}
+
+.image-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.image-name {
+  font-size: 13px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.image-meta {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.image-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: 8px;
+}
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: #f3f4f6;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn:hover {
+  background: #e5e7eb;
+}
+
+.icon-btn.danger {
+  background: #fee2e2;
+  color: var(--danger);
+}
+
+.icon-btn.success {
+  background: #dcfce7;
+  color: var(--success);
+}
+
+.buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+@media (max-width: 640px) {
+  .buttons {
+    grid-template-columns: 1fr;
+  }
+}
+
+.btn-primary {
+  padding: 14px;
+  border: none;
+  border-radius: 14px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform .1s ease;
+}
+
+.btn-primary:active {
+  transform: scale(.97);
+}
+
+.btn-install {
+  padding: 14px;
+  border: none;
+  border-radius: 14px;
+  background: #10b981;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform .1s ease;
+  display: none;
+}
+
+.btn-install:active {
+  transform: scale(.97);
+}
+
+.preview {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px;
+  overflow: auto;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+.status {
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 12px;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,15,25,.65);
+  backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  color: #fff;
+  font-size: 16px;
+  display: none;
+}
+
+.progress-bar {
+  width: 220px;
+  height: 8px;
+  background: rgba(255,255,255,.25);
+  border-radius: 10px;
+  margin-top: 18px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg,#6366f1,#818cf8);
+  border-radius: 10px;
+  transition: width .25s ease;
+}
+
+.progress-text {
+  margin-top: 10px;
+  font-size: 14px;
+  opacity: .9;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <header>
+    <h1>📄 A4 图片排版工具 Pro</h1>
+    <p>纯本地运行 · 完全离线可用 · 无外部依赖</p>
+  </header>
+
+  <div class="card">
+    <div class="template-group" id="templateGroup"></div>
+
+    <div class="row">
+      <div>
+        <label>行数</label>
+        <input type="number" id="rows" value="2" min="1" max="10">
+      </div>
+      <div>
+        <label>列数</label>
+        <input type="number" id="cols" value="2" min="1" max="10">
+      </div>
+    </div>
+
+    <div class="switch-group">
+      <span style="font-size:13px;color:var(--muted);">纸张方向：</span>
+      <button class="switch-btn active" id="portraitBtn">竖版 A4</button>
+      <button class="switch-btn" id="landscapeBtn">横版 A4</button>
+    </div>
+
+    <input type="file" id="file" multiple accept="image/*">
+    <div class="image-list" id="imageList"></div>
+
+    <div class="buttons">
+      <button class="btn-primary" id="prev">上一页</button>
+      <button class="btn-primary" id="next">下一页</button>
+      <button class="btn-primary" id="exportPdf">导出 PDF</button>
+      <button class="btn-install" id="installBtn">安装到桌面</button>
+    </div>
+  </div>
+
+  <div class="preview">
+    <canvas id="cv"></canvas>
+  </div>
+
+  <div class="status" id="status">请选择图片开始排版</div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div>正在生成 PDF…</div>
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <div class="progress-text" id="progressText">0%</div>
+</div>
+
+<script type="module">
+/* ========== 基础配置 ========== */
+const DPI = 300;
+const MM_PER_INCH = 25.4;
+const PX_PER_MM = DPI / MM_PER_INCH;
+
+let A4_W = 210;
+let A4_H = 297;
+
+const PAGE_MARGIN = 5;
+const GAP = 5;
+
+const canvas = document.getElementById('cv');
+const ctx = canvas.getContext('2d');
+
+let images = [];
+let currentPage = 0;
+let isPortrait = true;
+let currentTemplate = 'custom';
+
+/* ========== 预设模板定义 ========== */
+const TEMPLATES = {
+  custom: { name: '自定义', rows: 2, cols: 2, margin: 5, gap: 5, orientation: 'portrait' },
+  idPhoto1inch: { name: '1寸证件照', rows: 4, cols: 2, margin: 5, gap: 5, orientation: 'portrait' },
+  idPhoto2inch: { name: '2寸证件照', rows: 3, cols: 2, margin: 5, gap: 5, orientation: 'portrait' },
+  nineGrid: { name: '九宫格', rows: 3, cols: 3, margin: 5, gap: 5, orientation: 'portrait' },
+  photoWall: { name: '照片墙', rows: 2, cols: 3, margin: 5, gap: 5, orientation: 'landscape' },
+  single: { name: '单张大图', rows: 1, cols: 1, margin: 5, gap: 0, orientation: 'portrait' }
+};
+
+/* ========== 初始化 ========== */
+function resizeCanvas() {
+  canvas.width = A4_W * PX_PER_MM;
+  canvas.height = A4_H * PX_PER_MM;
+}
+
+resizeCanvas();
+
+function fillWhite() {
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function getLayout() {
+  return {
+    rows: parseInt(document.getElementById('rows').value),
+    cols: parseInt(document.getElementById('cols').value)
+  };
+}
+
+/* ========== 模板系统 ========== */
+function initTemplates() {
+  const group = document.getElementById('templateGroup');
+  group.innerHTML = '';
+  Object.keys(TEMPLATES).forEach(key => {
+    const template = TEMPLATES[key];
+    const btn = document.createElement('button');
+    btn.className = `template-btn ${key === currentTemplate ? 'active' : ''}`;
+    btn.textContent = template.name;
+    btn.dataset.template = key;
+    btn.addEventListener('click', () => applyTemplate(key));
+    group.appendChild(btn);
+  });
+}
+
+function applyTemplate(templateKey) {
+  const template = TEMPLATES[templateKey];
+  if (!template) return;
+  currentTemplate = templateKey;
+  document.getElementById('rows').value = template.rows;
+  document.getElementById('cols').value = template.cols;
+  if (template.orientation === 'portrait') setPortrait();
+  else setLandscape();
+  document.querySelectorAll('.template-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.template === templateKey);
+  });
+  renderPage();
+}
+
+function switchToCustomTemplate() {
+  if (currentTemplate !== 'custom') {
+    currentTemplate = 'custom';
+    document.querySelectorAll('.template-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.template === 'custom');
+    });
+  }
+}
+
+/* ========== 图片管理 ========== */
+function updateImageList() {
+  const list = document.getElementById('imageList');
+  list.innerHTML = '';
+  images.forEach((img, index) => {
+    const item = document.createElement('div');
+    item.className = 'image-item';
+    item.draggable = true;
+    item.dataset.index = index;
+
+    const thumb = document.createElement('img');
+    thumb.className = 'image-thumb';
+    thumb.src = img.el.src;
+
+    const info = document.createElement('div');
+    info.className = 'image-info';
+
+    const name = document.createElement('div');
+    name.className = 'image-name';
+    name.textContent = img.name || `图片 ${index + 1}`;
+
+    const meta = document.createElement('div');
+    meta.className = 'image-meta';
+    meta.textContent = `${img.w}×${img.h} · 旋转 ${img.rotation || 0}°`;
+
+    info.appendChild(name);
+    info.appendChild(meta);
+
+    const actions = document.createElement('div');
+    actions.className = 'image-actions';
+
+    const rotateBtn = document.createElement('button');
+    rotateBtn.className = 'icon-btn success';
+    rotateBtn.innerHTML = '↻';
+    rotateBtn.title = '旋转 90°';
+    rotateBtn.onclick = (e) => {
+      e.stopPropagation();
+      img.rotation = ((img.rotation || 0) + 90) % 360;
+      updateImageList();
+      renderPage();
+    };
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'icon-btn danger';
+    removeBtn.innerHTML = '×';
+    removeBtn.title = '删除';
+    removeBtn.onclick = (e) => {
+      e.stopPropagation();
+      URL.revokeObjectURL(img.el.src);
+      images.splice(index, 1);
+      updateImageList();
+      renderPage();
+    };
+
+    actions.appendChild(rotateBtn);
+    actions.appendChild(removeBtn);
+    item.appendChild(thumb);
+    item.appendChild(info);
+    item.appendChild(actions);
+    list.appendChild(item);
+  });
+  bindDragEvents();
+}
+
+/* ========== 拖拽排序 ========== */
+let dragSrcIndex = null;
+function bindDragEvents() {
+  const items = document.querySelectorAll('.image-item');
+  items.forEach(item => {
+    item.addEventListener('dragstart', e => {
+      dragSrcIndex = parseInt(item.dataset.index);
+      item.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    item.addEventListener('dragend', () => item.classList.remove('dragging'));
+    item.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+    item.addEventListener('drop', e => {
+      e.preventDefault();
+      const targetIndex = parseInt(item.dataset.index);
+      if (dragSrcIndex === null || dragSrcIndex === targetIndex) return;
+      const draggedItem = images[dragSrcIndex];
+      images.splice(dragSrcIndex, 1);
+      images.splice(targetIndex, 0, draggedItem);
+      updateImageList();
+      renderPage();
+      dragSrcIndex = null;
+    });
+  });
+}
+
+/* ========== 加载图片 ========== */
+function loadImages(files) {
+  [...files].forEach(f => {
+    const img = new Image();
+    img.onload = () => {
+      images.push({ el: img, name: f.name, w: img.naturalWidth, h: img.naturalHeight, rotation: 0 });
+      updateImageList();
+      renderPage();
+    };
+    img.src = URL.createObjectURL(f);
+  });
+}
+
+/* ========== 绘制逻辑 ========== */
+function renderPage() {
+  fillWhite();
+  const { rows, cols } = getLayout();
+  const perPage = rows * cols;
+  const start = currentPage * perPage;
+  const totalPages = Math.ceil(images.length / perPage);
+
+  const contentW = A4_W - PAGE_MARGIN * 2;
+  const contentH = A4_H - PAGE_MARGIN * 2;
+  const cellW = (contentW - GAP * (cols - 1)) / cols;
+  const cellH = (contentH - GAP * (rows - 1)) / rows;
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const i = start + r * cols + c;
+      if (!images[i]) continue;
+      const x = PAGE_MARGIN + c * (cellW + GAP);
+      const y = PAGE_MARGIN + r * (cellH + GAP);
+      drawImageWithRotation(images[i], x, y, cellW, cellH);
+    }
+  }
+
+  document.getElementById('status').textContent =
+    images.length ? `第 ${currentPage + 1} 页 / 共 ${totalPages} 页 · ${images.length} 张图片` : '请选择图片开始排版';
+}
+
+function drawImageWithRotation(img, x, y, bw, bh) {
+  ctx.save();
+  ctx.translate((x + bw / 2) * PX_PER_MM, (y + bh / 2) * PX_PER_MM);
+  const angle = (img.rotation || 0) * Math.PI / 180;
+  ctx.rotate(angle);
+
+  let w = img.w, h = img.h;
+  if (img.rotation % 180 !== 0) [w, h] = [h, w];
+
+  const r = w / h;
+  let dw = bw, dh = bh;
+  if (bw / bh > r) dw = bh * r;
+  else dh = bw / r;
+
+  ctx.drawImage(img.el, -dw / 2 * PX_PER_MM, -dh / 2 * PX_PER_MM, dw * PX_PER_MM, dh * PX_PER_MM);
+  ctx.restore();
+}
+
+/* ========== 翻页 ========== */
+document.getElementById('prev').onclick = () => {
+  const { rows, cols } = getLayout();
+  const max = Math.ceil(images.length / (rows * cols)) - 1;
+  if (currentPage > 0) { currentPage--; renderPage(); }
+};
+document.getElementById('next').onclick = () => {
+  const { rows, cols } = getLayout();
+  const max = Math.ceil(images.length / (rows * cols)) - 1;
+  if (currentPage < max) { currentPage++; renderPage(); }
+};
+
+/* ========== 横竖版切换 ========== */
+function setPortrait() {
+  isPortrait = true; A4_W = 210; A4_H = 297;
+  document.getElementById('portraitBtn').classList.add('active');
+  document.getElementById('landscapeBtn').classList.remove('active');
+  resizeCanvas(); switchToCustomTemplate();
+}
+function setLandscape() {
+  isPortrait = false; A4_W = 297; A4_H = 210;
+  document.getElementById('landscapeBtn').classList.add('active');
+  document.getElementById('portraitBtn').classList.remove('active');
+  resizeCanvas(); switchToCustomTemplate();
+}
+document.getElementById('portraitBtn').onclick = setPortrait;
+document.getElementById('landscapeBtn').onclick = setLandscape;
+
+/* ========== 导出PDF ========== */
+const overlay = document.getElementById('overlay');
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+
+document.getElementById('exportPdf').onclick = async () => {
+  if (!images.length) return;
+  const { jsPDF } = window.jspdf;
+  const orientation = isPortrait ? 'p' : 'l';
+  const pdf = new jsPDF(orientation, 'mm', 'a4');
+  const { rows, cols } = getLayout();
+  const perPage = rows * cols;
+  const total = Math.ceil(images.length / perPage);
+
+  overlay.style.display = 'flex';
+  progressFill.style.width = '0%';
+  progressText.textContent = '0%';
+
+  for (let p = 0; p < total; p++) {
+    if (p > 0) pdf.addPage();
+    currentPage = p;
+    renderPage();
+    await new Promise(r => requestAnimationFrame(r));
+    const img = canvas.toDataURL('image/jpeg', 1.0);
+    pdf.addImage(img, 'JPEG', 0, 0, A4_W, A4_H);
+    const percent = Math.round(((p + 1) / total) * 100);
+    progressFill.style.width = percent + '%';
+    progressText.textContent = percent + '%';
+  }
+
+  const now = new Date();
+  const timestamp = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + '_' + String(now.getHours()).padStart(2, '0') + '-' + String(now.getMinutes()).padStart(2, '0') + '-' + String(now.getSeconds()).padStart(2, '0');
+  pdf.save(`A4排版_${timestamp}.pdf`);
+  overlay.style.display = 'none';
+};
+
+/* ========== PWA 安装逻辑 ========== */
+let deferredPrompt;
+const installBtn = document.getElementById('installBtn');
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault(); deferredPrompt = e; installBtn.style.display = 'block';
+});
+installBtn.addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') console.log('用户接受安装');
+  deferredPrompt = null; installBtn.style.display = 'none';
+});
+window.addEventListener('appinstalled', () => {
+  installBtn.style.display = 'none'; console.log('PWA安装成功');
+});
+
+/* ========== 事件绑定 ========== */
+document.getElementById('file').onchange = e => loadImages(e.target.files);
+['rows', 'cols'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    switchToCustomTemplate(); renderPage();
+  });
+});
+
+/* ========== 初始化 ========== */
+initTemplates();
+applyTemplate('custom');
+
+/* ========== Service Worker 注册 ========== */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(registration => console.log('Service Worker 注册成功'))
+      .catch(err => console.log('Service Worker 注册失败:', err));
+  });
+}
+</script>
+</body>
+</html>
